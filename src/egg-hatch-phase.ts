@@ -442,8 +442,8 @@ export class EggHatchPhase extends Phase {
 
         ret = this.scene.addPlayerPokemon(pokemonSpecies, 1, undefined, undefined, undefined, false);
       }
-
-      ret.trySetShiny(this.egg.gachaType === GachaType.SHINY ? 1024 : 512);
+      // old values -> 1024 : 512
+      ret.trySetShiny(this.egg.gachaType === GachaType.SHINY ? 2048 : 1024);
       ret.variant = ret.shiny ? ret.generateVariant() : 0;
 
       const secondaryIvs = Utils.getIvsFromId(Utils.randSeedInt(4294967295));
