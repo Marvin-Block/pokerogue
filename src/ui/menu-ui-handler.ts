@@ -152,7 +152,7 @@ export default class MenuUiHandler extends MessageUiHandler {
       },
       keepOpen: true
     });
-    if (Utils.apiUrl === "https://sephiran.com:8001") {
+    if (Utils.isLocal || Utils.apiUrl === "https://sephiran.com:8001") {
       manageDataOptions.push({
         label: i18next.t("menuUiHandler:importData"),
         handler: () => {
