@@ -748,7 +748,7 @@ export class SurviveDamageModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 5;
+    return 9;
   }
 }
 
@@ -782,7 +782,7 @@ export class BypassSpeedChanceModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 3;
+    return 6;
   }
 }
 
@@ -816,7 +816,7 @@ export class FlinchChanceModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 3;
+    return 6;
   }
 }
 
@@ -847,7 +847,7 @@ export class TurnHealModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 4;
+    return 8;
   }
 }
 
@@ -877,7 +877,7 @@ export class HitHealModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 4;
+    return 6;
   }
 }
 
@@ -951,7 +951,7 @@ export class BerryModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 10;
+    return 15;
   }
 }
 
@@ -1010,7 +1010,7 @@ export class PokemonInstantReviveModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 1;
+    return 2;
   }
 }
 
@@ -1503,7 +1503,7 @@ export class PokemonNatureWeightModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 10;
+    return 20;
   }
 }
 
@@ -1543,7 +1543,7 @@ export class PokemonMoveAccuracyBoosterModifier extends PokemonHeldItemModifier 
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 3;
+    return 6;
   }
 }
 
@@ -1566,21 +1566,42 @@ export class PokemonMultiHitModifier extends PokemonHeldItemModifier {
     const power = args[2] as Utils.NumberHolder;
     switch (this.getStackCount()) {
     case 1:
-      power.value *= 0.4;
+      power.value *= 0.5;
       break;
     case 2:
-      power.value *= 0.25;
+      power.value *= 0.33;
       break;
     case 3:
-      power.value *= 0.175;
+      power.value *= 0.25;
       break;
+    case 4:
+      power.value *= 0.2;
+      break;
+    case 5:
+      power.value *= 0.17;
+
+    //   case 1:
+    //   power.value *= 0.4;
+    //   break;
+    // case 2:
+    //   power.value *= 0.25;
+    //   break;
+    // case 3:
+    //   power.value *= 0.175;
+    //   break;
+    // case 4:
+    //   power.value *= 0.125;
+    //   break;
+    // case 5:
+    //   power.value *= 0.1;
+
     }
 
     return true;
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 3;
+    return 5;
   }
 }
 
@@ -1675,7 +1696,7 @@ export class MoneyMultiplierModifier extends PersistentModifier {
   }
 
   getMaxStackCount(scene: BattleScene): integer {
-    return 5;
+    return 10;
   }
 }
 
@@ -1702,7 +1723,7 @@ export class DamageMoneyRewardModifier extends PokemonHeldItemModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 5;
+    return 10;
   }
 }
 
@@ -1754,7 +1775,7 @@ export class HiddenAbilityRateBoosterModifier extends PersistentModifier {
   }
 
   getMaxStackCount(scene: BattleScene): integer {
-    return 4;
+    return 8;
   }
 }
 
@@ -1778,7 +1799,7 @@ export class ShinyRateBoosterModifier extends PersistentModifier {
   }
 
   getMaxStackCount(scene: BattleScene): integer {
-    return 4;
+    return 8;
   }
 }
 
@@ -1916,7 +1937,7 @@ export class TurnHeldItemTransferModifier extends HeldItemTransferModifier {
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 1;
+    return 2;
   }
 }
 
@@ -1950,7 +1971,7 @@ export class ContactHeldItemTransferChanceModifier extends HeldItemTransferModif
   }
 
   getMaxHeldItemCount(pokemon: Pokemon): integer {
-    return 5;
+    return 10;
   }
 }
 
@@ -1996,7 +2017,7 @@ export class ExtraModifierModifier extends PersistentModifier {
   }
 
   getMaxStackCount(scene: BattleScene): integer {
-    return 3;
+    return 4;
   }
 }
 
