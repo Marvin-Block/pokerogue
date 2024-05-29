@@ -93,7 +93,7 @@ export const modifierType: ModifierTypeTranslationEntries = {
       description: "Erhöht die Genauigkeit der Angriffe um {{accuracyAmount}} (maximal 100)",
     },
     "PokemonMultiHitModifierType": {
-      description: "Attacken treffen ein weiteres mal mit einer Reduktion von 60/75/82,5% der Stärke",
+      description: "Attacken treffen ein weiteres mal mit einer Reduktion von 50/66/75/80/83% der Stärke",
     },
     "TmModifierType": {
       name: "TM{{moveId}} - {{moveName}}",

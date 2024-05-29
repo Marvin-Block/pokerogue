@@ -93,7 +93,7 @@ export const modifierType: ModifierTypeTranslationEntries = {
       description: "Increases move accuracy by {{accuracyAmount}} (maximum 100)",
     },
     "PokemonMultiHitModifierType": {
-      description: "Attacks hit one additional time at the cost of a 60/75/82.5% power reduction per stack respectively",
+      description: "Attacks hit one additional time at the cost of a  50/66/75/80/83% power reduction per stack respectively",
     },
     "TmModifierType": {
       name: "TM{{moveId}} - {{moveName}}",

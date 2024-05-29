@@ -93,7 +93,7 @@ export const modifierType: ModifierTypeTranslationEntries = {
       description: "Augmente de {{accuracyAmount}} la précision des capacités (maximum 100)",
     },
     "PokemonMultiHitModifierType": {
-	  description: "Frappe une fois de plus en échange d’une baisse de puissance de respectivement 60/75/82,5% par cumul",
+	  description: "Frappe une fois de plus en échange d’une baisse de puissance de respectivement 50/66/75/80/83% par cumul",
     },
     "TmModifierType": {
       name: "CT{{moveId}} - {{moveName}}",
