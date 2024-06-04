@@ -1044,7 +1044,7 @@ export class PreserveBerryModifier extends PersistentModifier {
   }
 
   getMaxStackCount(scene: BattleScene): integer {
-    return 3;
+    return 4;
   }
 }
 
