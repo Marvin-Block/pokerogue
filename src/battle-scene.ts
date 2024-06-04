@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import UI  from "./ui/ui";
+import UI from "./ui/ui";
 import { NextEncounterPhase, NewBiomeEncounterPhase, SelectBiomePhase, MessagePhase, TurnInitPhase, ReturnPhase, LevelCapPhase, ShowTrainerPhase, LoginPhase, MovePhase, TitlePhase, SwitchPhase } from "./phases";
 import Pokemon, { PlayerPokemon, EnemyPokemon } from "./field/pokemon";
 import PokemonSpecies, { PokemonSpeciesFilter, allSpecies, getPokemonSpecies } from "./data/pokemon-species";
@@ -58,6 +58,7 @@ import {InputsController} from "./inputs-controller";
 import {UiInputs} from "./ui-inputs";
 import { MoneyFormat } from "./enums/money-format";
 import { NewArenaEvent } from "./battle-scene-events";
+import ArenaFlyout from "./ui/arena-flyout";
 
 export const bypassLogin = import.meta.env.VITE_BYPASS_LOGIN === "1";
 
@@ -90,7 +91,9 @@ export default class BattleScene extends SceneBase {
   public seVolume: number = 1;
   public gameSpeed: integer = 1;
   public damageNumbersMode: integer = 0;
+  public reroll: boolean = false;
   public showMovesetFlyout: boolean = true;
+  public showArenaFlyout: boolean = true;
   public showLevelUpStats: boolean = true;
   public enableTutorials: boolean = import.meta.env.VITE_BYPASS_TUTORIAL === "1";
   public enableRetries: boolean = false;
@@ -113,6 +116,8 @@ export default class BattleScene extends SceneBase {
   public experimentalSprites: boolean = false;
   public moveAnimations: boolean = true;
   public expGainsSpeed: integer = 0;
+  public skipSeenDialogues: boolean = false;
+
   /**
 	 * Defines the experience gain display mode.
 	 *
@@ -130,8 +135,6 @@ export default class BattleScene extends SceneBase {
   public fusionPaletteSwaps: boolean = true;
   public enableTouchControls: boolean = false;
   public enableVibration: boolean = false;
-  public gamepadSupport: boolean = false;
-  public abSwapped: boolean = false;
 
   public disableMenu: boolean = false;
 
@@ -177,6 +180,8 @@ export default class BattleScene extends SceneBase {
   private luckText: Phaser.GameObjects.Text;
   private modifierBar: ModifierBar;
   private enemyModifierBar: ModifierBar;
+  public arenaFlyout: ArenaFlyout;
+
   private fieldOverlay: Phaser.GameObjects.Rectangle;
   private modifiers: PersistentModifier[];
   private enemyModifiers: PersistentModifier[];
@@ -409,6 +414,10 @@ export default class BattleScene extends SceneBase {
     this.luckLabelText.setOrigin(1, 0);
     this.luckLabelText.setVisible(false);
     this.fieldUI.add(this.luckLabelText);
+
+    this.arenaFlyout = new ArenaFlyout(this);
+    this.fieldUI.add(this.arenaFlyout);
+    this.fieldUI.moveBelow<Phaser.GameObjects.GameObject>(this.arenaFlyout, this.fieldOverlay);
 
     this.updateUIPositions();
 
@@ -1102,6 +1111,8 @@ export default class BattleScene extends SceneBase {
     case Species.FLOETTE:
     case Species.FLORGES:
     case Species.FURFROU:
+    case Species.PUMPKABOO:
+    case Species.GOURGEIST:
     case Species.ORICORIO:
     case Species.MAGEARNA:
     case Species.ZARUDE:
@@ -1271,6 +1282,13 @@ export default class BattleScene extends SceneBase {
     return sprite;
   }
 
+  moveBelowOverlay<T extends Phaser.GameObjects.GameObject>(gameObject: T) {
+    this.fieldUI.moveBelow<any>(gameObject, this.fieldOverlay);
+  }
+  processInfoButton(pressed: boolean): void {
+    this.arenaFlyout.toggleFlyout(pressed);
+  }
+
   showFieldOverlay(duration: integer): Promise<void> {
     return new Promise(resolve => {
       this.tweens.add({
@@ -1311,6 +1329,7 @@ export default class BattleScene extends SceneBase {
     const formattedMoney =
 			this.moneyFormat === MoneyFormat.ABBREVIATED ? Utils.formatFancyLargeNumber(this.money, 3) : this.money.toLocaleString();
     this.moneyText.setText(`₽${formattedMoney}`);
+    this.fieldUI.moveAbove(this.moneyText, this.luckText);
     if (forceVisible) {
       this.moneyText.setVisible(true);
     }
@@ -1322,12 +1341,8 @@ export default class BattleScene extends SceneBase {
   }
 
   updateAndShowText(duration: integer): void {
-    this.fieldUI.moveBelow(this.moneyText, this.luckText);
     const labels = [ this.luckLabelText, this.luckText ];
-    labels.map(t => {
-      t.setAlpha(0);
-      t.setVisible(true);
-    });
+    labels.forEach(t => t.setAlpha(0));
     const luckValue = getPartyLuckValue(this.getParty());
     this.luckText.setText(getLuckString(luckValue));
     if (luckValue < 14) {
@@ -1339,18 +1354,24 @@ export default class BattleScene extends SceneBase {
     this.tweens.add({
       targets: labels,
       duration: duration,
-      alpha: 1
+      alpha: 1,
+      onComplete: () => {
+        labels.forEach(t => t.setVisible(true));
+      }
     });
   }
 
   hideLuckText(duration: integer): void {
+    if (this.reroll) {
+      return;
+    }
     const labels = [ this.luckLabelText, this.luckText ];
     this.tweens.add({
       targets: labels,
       duration: duration,
       alpha: 0,
       onComplete: () => {
-        labels.map(l => l.setVisible(false));
+        labels.forEach(l => l.setVisible(false));
       }
     });
   }
@@ -1872,7 +1893,20 @@ export default class BattleScene extends SceneBase {
     });
   }
 
-  tryTransferHeldItemModifier(itemModifier: PokemonHeldItemModifier, target: Pokemon, transferStack: boolean, playSound: boolean, instant?: boolean, ignoreUpdate?: boolean): Promise<boolean> {
+  /**
+   * Try to transfer a held item to another pokemon.
+   * If the recepient already has the maximum amount allowed for this item, the transfer is cancelled.
+   * The quantity to transfer is automatically capped at how much the recepient can take before reaching the maximum stack size for the item.
+   * A transfer that moves a quantity smaller than what is specified in the transferQuantity parameter is still considered successful.
+   * @param itemModifier {@linkcode PokemonHeldItemModifier} item to transfer (represents the whole stack)
+   * @param target {@linkcode Pokemon} pokemon recepient in this transfer
+   * @param playSound {boolean}
+   * @param transferQuantity {@linkcode integer} how many items of the stack to transfer. Optional, defaults to 1
+   * @param instant {boolean}
+   * @param ignoreUpdate {boolean}
+   * @returns true if the transfer was successful
+   */
+  tryTransferHeldItemModifier(itemModifier: PokemonHeldItemModifier, target: Pokemon, playSound: boolean, transferQuantity: integer = 1, instant?: boolean, ignoreUpdate?: boolean): Promise<boolean> {
     return new Promise(resolve => {
       const source = itemModifier.pokemonId ? itemModifier.getPokemon(target.scene) : null;
       const cancelled = new Utils.BooleanHolder(false);
@@ -1890,14 +1924,16 @@ export default class BattleScene extends SceneBase {
           if (matchingModifier.stackCount >= maxStackCount) {
             return resolve(false);
           }
-          const countTaken = transferStack ? Math.min(itemModifier.stackCount, maxStackCount - matchingModifier.stackCount) : 1;
+          const countTaken = Math.min(transferQuantity, itemModifier.stackCount, maxStackCount - matchingModifier.stackCount);
           itemModifier.stackCount -= countTaken;
           newItemModifier.stackCount = matchingModifier.stackCount + countTaken;
           removeOld = !itemModifier.stackCount;
-        } else if (!transferStack) {
-          newItemModifier.stackCount = 1;
-          removeOld = !(--itemModifier.stackCount);
+        } else {
+          const countTaken = Math.min(transferQuantity, itemModifier.stackCount);
+          itemModifier.stackCount -= countTaken;
+          newItemModifier.stackCount = countTaken;
         }
+        removeOld = !itemModifier.stackCount;
         if (!removeOld || !source || this.removeModifier(itemModifier, !source.isPlayer())) {
           const addModifier = () => {
             if (!matchingModifier || this.removeModifier(matchingModifier, !target.isPlayer())) {
